@@ -1,0 +1,26 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Registrasi Dosen - KREASI{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card card-custom shadow-lg">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4"><i class="bi bi-person-badge"></i> Registrasi Dosen</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary w-100 btn-lg mt-3">Daftar</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <p>Sudah punya akun? <a href="{% url 'login' %}">Login di sini</a></p>
+                        <p><a href="{% url 'register_mahasiswa' %}">Daftar sebagai Mahasiswa</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

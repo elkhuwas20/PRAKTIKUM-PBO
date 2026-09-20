@@ -1,0 +1,112 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Home - KREASI{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Selamat Datang di KREASI</h1>
+                <p class="lead mb-4">Sistem Kolaborasi dan Rekam Jejak Mahasiswa Informatika</p>
+                <p class="mb-4">Platform untuk mengelola portofolio, validasi prestasi, dan kolaborasi proyek mahasiswa-dosen.</p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'register_mahasiswa' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-person-plus"></i> Daftar Sebagai Mahasiswa
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Login</a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center mt-4 mt-lg-0">
+                <i class="bi bi-people-fill" style="font-size: 15rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container my-5">
+    <h2 class="text-center mb-5">Fitur Utama</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="bi bi-trophy-fill text-warning" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">Validasi Prestasi</h5>
+                    <p class="card-text">Ajukan prestasi dan dapatkan validasi dari dosen untuk meningkatkan portofolio Anda.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="bi bi-briefcase-fill text-primary" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">Bursa Proyek</h5>
+                    <p class="card-text">Temukan dan bergabung dengan proyek kolaborasi atau buat proyek sendiri.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="bi bi-people-fill text-success" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">Talent Pool</h5>
+                    <p class="card-text">Database talenta mahasiswa untuk rekrutmen berbasis portofolio dan keahlian.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="bi bi-star-fill text-warning" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">Sistem Poin</h5>
+                    <p class="card-text">Kumpulkan poin dari prestasi dan proyek untuk memenuhi target TAK/SAT.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="bi bi-file-earmark-text-fill text-info" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">SKPI Otomatis</h5>
+                    <p class="card-text">Generate SKPI otomatis dari semua aktivitas tervalidasi selama masa studi.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="bi bi-diagram-3-fill text-danger" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">Cross-Department</h5>
+                    <p class="card-text">Kolaborasi lintas program studi terdokumentasi dengan baik.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <h2 class="display-4 fw-bold text-primary">{{ stats.total_mahasiswa }}</h2>
+                <p class="text-muted">Mahasiswa Terdaftar</p>
+            </div>
+            <div class="col-md-3">
+                <h2 class="display-4 fw-bold text-success">{{ stats.total_dosen }}</h2>
+                <p class="text-muted">Dosen</p>
+            </div>
+            <div class="col-md-3">
+                <h2 class="display-4 fw-bold text-warning">{{ stats.total_proyek }}</h2>
+                <p class="text-muted">Proyek Aktif</p>
+            </div>
+            <div class="col-md-3">
+                <h2 class="display-4 fw-bold text-info">{{ stats.total_prestasi }}</h2>
+                <p class="text-muted">Prestasi Tervalidasi</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
