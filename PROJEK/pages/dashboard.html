@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - KREASI</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="../index.html" class="navbar-brand">🎓 KREASI</a>
+            <ul class="navbar-menu"></ul>
+            <div class="nav-user"></div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 3rem 20px;">
+        <h1 class="mb-4">📊 Dashboard</h1>
+        <p class="lead mb-4">Selamat datang, <strong id="userName"></strong>!</p>
+
+        <!-- Mahasiswa Dashboard -->
+        <div id="mahasiswaDashboard" class="hidden">
+            <div class="grid grid-4 mb-4">
+                <div class="card card-gradient-1">
+                    <div class="card-icon">⭐</div>
+                    <div class="card-number" id="totalPoin">0</div>
+                    <div class="card-text">Total Poin</div>
+                </div>
+
+                <div class="card card-gradient-2">
+                    <div class="card-icon">⏳</div>
+                    <div class="card-number" id="prestasiPending">0</div>
+                    <div class="card-text">Prestasi Pending</div>
+                </div>
+
+                <div class="card card-gradient-3">
+                    <div class="card-icon">🏆</div>
+                    <div class="card-number" id="prestasiApproved">0</div>
+                    <div class="card-text">Prestasi Disetujui</div>
+                </div>
+
+                <div class="card card-gradient-4">
+                    <div class="card-icon">💼</div>
+                    <div class="card-number" id="proyekDiikuti">0</div>
+                    <div class="card-text">Proyek Diikuti</div>
+                </div>
+            </div>
+
+            <!-- Progress Bars -->
+            <div class="grid grid-2 mb-4">
+                <div class="card">
+                    <h3 class="mb-3">📈 Progress TAK/SAT</h3>
+                    <p class="text-muted">Target: 200 poin</p>
+                    <div class="progress">
+                        <div class="progress-bar" id="progressTAK">0/200</div>
+                    </div>
+                    <p class="text-muted mt-2" id="infoTAK"></p>
+                </div>
+
+                <div class="card">
+                    <h3 class="mb-3">🎓 Progress Beasiswa</h3>
+                    <p class="text-muted">Target: 500 poin</p>
+                    <div class="progress">
+                        <div class="progress-bar" id="progressBeasiswa" style="background: var(--warning-color);">0/500</div>
+                    </div>
+                    <p class="text-muted mt-2" id="infoBeasiswa"></p>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <h3 class="mb-3">⚡ Quick Actions</h3>
+                <div class="d-flex gap-2" style="flex-wrap: wrap;">
+                    <a href="prestasi.html" class="btn btn-primary">➕ Tambah Prestasi</a>
+                    <a href="proyek.html" class="btn btn-success">🔍 Cari Proyek</a>
+                    <a href="profil.html" class="btn btn-info">👤 Lihat Profil</a>
+                    <a href="prestasi.html" class="btn btn-warning">📋 Prestasi Saya</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dosen Dashboard -->
+        <div id="dosenDashboard" class="hidden">
+            <div class="grid grid-3 mb-4">
+                <div class="card card-gradient-2">
+                    <div class="card-icon">⏳</div>
+                    <div class="card-number" id="dosenPrestasiPending">0</div>
+                    <div class="card-text">Prestasi Menunggu Validasi</div>
+                </div>
+
+                <div class="card card-gradient-3">
+                    <div class="card-icon">💼</div>
+                    <div class="card-number" id="dosenProyek">0</div>
+                    <div class="card-text">Proyek yang Dibuat</div>
+                </div>
+
+                <div class="card card-gradient-4">
+                    <div class="card-icon">✅</div>
+                    <div class="card-number" id="dosenValidasi">0</div>
+                    <div class="card-text">Total Validasi</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <h3 class="mb-3">⚡ Quick Actions</h3>
+                <div class="d-flex gap-2" style="flex-wrap: wrap;">
+                    <a href="prestasi.html" class="btn btn-primary">✅ Validasi Prestasi</a>
+                    <a href="proyek.html" class="btn btn-success">➕ Buat Proyek</a>
+                    <a href="talent-pool.html" class="btn btn-info">👥 Talent Pool</a>
+                    <a href="proyek.html" class="btn btn-warning">💼 Semua Proyek</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 KREASI</p>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        const user = dataManager.getCurrentUser();
+        if (!user) {
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('userName').textContent = user.nama;
+
+        if (user.role === 'mahasiswa') {
+            document.getElementById('mahasiswaDashboard').classList.remove('hidden');
+            
+            // Calculate stats
+            const prestasi = dataManager.getPrestasiByUser(user.id);
+            const pending = prestasi.filter(p => p.status === 'pending').length;
+            const approved = prestasi.filter(p => p.status === 'approved').length;
+            
+            const proyek = dataManager.getProyek();
+            const proyekDiikuti = proyek.filter(p => 
+                p.anggota && p.anggota.some(a => a.userId === user.id && a.status === 'accepted')
+            ).length;
+            
+            const poin = calculatePoin(user);
+            
+            // Update UI
+            document.getElementById('totalPoin').textContent = poin;
+            document.getElementById('prestasiPending').textContent = pending;
+            document.getElementById('prestasiApproved').textContent = approved;
+            document.getElementById('proyekDiikuti').textContent = proyekDiikuti;
+            
+            // Progress bars
+            const percentTAK = Math.min((poin / 200) * 100, 100);
+            const percentBeasiswa = Math.min((poin / 500) * 100, 100);
+            
+            document.getElementById('progressTAK').style.width = percentTAK + '%';
+            document.getElementById('progressTAK').textContent = `${poin}/200`;
+            document.getElementById('progressBeasiswa').style.width = percentBeasiswa + '%';
+            document.getElementById('progressBeasiswa').textContent = `${poin}/500`;
+            
+            document.getElementById('infoTAK').textContent = poin >= 200 ? 
+                '✅ Target tercapai!' : `Butuh ${200 - poin} poin lagi`;
+            document.getElementById('infoBeasiswa').textContent = poin >= 500 ? 
+                '✅ Target tercapai!' : `Butuh ${500 - poin} poin lagi`;
+                
+        } else if (user.role === 'dosen') {
+            document.getElementById('dosenDashboard').classList.remove('hidden');
+            
+            const allPrestasi = dataManager.getPrestasi();
+            const pending = allPrestasi.filter(p => p.status === 'pending').length;
+            const validated = allPrestasi.filter(p => p.validatorId === user.id).length;
+            
+            const proyek = dataManager.getProyek();
+            const proyekDibuat = proyek.filter(p => p.pembuatId === user.id).length;
+            
+            document.getElementById('dosenPrestasiPending').textContent = pending;
+            document.getElementById('dosenProyek').textContent = proyekDibuat;
+            document.getElementById('dosenValidasi').textContent = validated;
+        }
+    </script>
+</body>
+</html>

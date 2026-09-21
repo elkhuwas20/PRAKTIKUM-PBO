@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - KREASI</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="../index.html" class="navbar-brand">🎓 KREASI</a>
+            <a href="../index.html" class="btn btn-outline">Kembali ke Home</a>
+        </div>
+    </nav>
+
+    <!-- Login Form -->
+    <div class="container" style="max-width: 500px; padding: 3rem 20px;">
+        <div class="card">
+            <h2 class="text-center mb-4">🔐 Login</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" required 
+                           placeholder="nama@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required 
+                           placeholder="Minimal 6 karakter">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Login
+                </button>
+            </form>
+
+            <div class="text-center mt-3">
+                <p class="text-muted">Belum punya akun?</p>
+                <a href="register.html" class="btn btn-secondary">Daftar Sekarang</a>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <strong>💡 Demo Account:</strong><br>
+                <strong>Mahasiswa:</strong> budi@student.ac.id / 123456<br>
+                <strong>Dosen:</strong> ahmad@lecturer.ac.id / 123456
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/app.js"></script>
+    <script>
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const user = dataManager.login(email, password);
+            
+            if (user) {
+                showToast(`Selamat datang, ${user.nama}!`, 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            } else {
+                showToast('Email atau password salah!', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buka Website KREASI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+        p {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            margin: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .info-box li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .info-box li:last-child {
+            border-bottom: none;
+        }
+        .demo-account {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 KREASI Website</h1>
+        <p>Sistem Kolaborasi dan Rekam Jejak Mahasiswa Informatika</p>
+        
+        <a href="index.html" class="btn">🚀 Buka Website</a>
+        
+        <div class="info-box">
+            <h3>📌 Quick Info</h3>
+            <ul>
+                <li><strong>Tech:</strong> HTML + CSS + JavaScript (Pure!)</li>
+                <li><strong>Database:</strong> localStorage (Browser)</li>
+                <li><strong>Features:</strong> Login, Dashboard, Prestasi, Proyek, dll</li>
+                <li><strong>Status:</strong> ✅ Production Ready</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h3>🔑 Demo Account</h3>
+            <div class="demo-account">
+                <strong>Mahasiswa:</strong><br>
+                Email: budi@student.ac.id<br>
+                Password: 123456
+            </div>
+            <div class="demo-account" style="margin-top: 10px;">
+                <strong>Dosen:</strong><br>
+                Email: ahmad@lecturer.ac.id<br>
+                Password: 123456
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.9rem;">
+                💡 Atau klik tombol "Demo Data" di landing page!
+            </p>
+        </div>
+
+        <div class="info-box">
+            <h3>📂 File Structure</h3>
+            <ul>
+                <li>✅ index.html - Landing page</li>
+                <li>✅ pages/login.html - Login</li>
+                <li>✅ pages/register.html - Register</li>
+                <li>✅ pages/dashboard.html - Dashboard</li>
+                <li>✅ css/style.css - Stylesheet (700+ lines)</li>
+                <li>✅ js/app.js - JavaScript (300+ lines)</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h3>📚 Dokumentasi</h3>
+            <p>Baca file-file berikut untuk panduan lengkap:</p>
+            <ul>
+                <li>📄 README.md - Overview</li>
+                <li>📄 PANDUAN_LENGKAP.md - User flow detail</li>
+                <li>📄 INFO.txt - Quick reference</li>
+            </ul>
+        </div>
+
+        <p style="margin-top: 2rem; color: #999; font-size: 0.9rem;">
+            Developed with ❤️ for KREASI Project
+        </p>
+    </div>
+
+    <script>
+        // Auto redirect after 3 seconds (optional)
+        // setTimeout(() => window.location.href = 'index.html', 3000);
+    </script>
+</body>
+</html>

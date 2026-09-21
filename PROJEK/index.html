@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KREASI - Sistem Kolaborasi dan Rekam Jejak Mahasiswa Informatika</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                🎓 KREASI
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="#features">Fitur</a></li>
+                <li><a href="#about">Tentang</a></li>
+            </ul>
+            <div class="nav-user">
+                <a href="pages/login.html" class="btn btn-outline">Login</a>
+                <a href="pages/register.html" class="btn btn-outline">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Selamat Datang di KREASI</h1>
+            <p class="mb-4">Sistem Kolaborasi dan Rekam Jejak Mahasiswa Informatika</p>
+            <p style="max-width: 700px; margin: 0 auto 2rem; opacity: 0.95;">
+                Platform untuk mengelola portofolio, validasi prestasi, dan kolaborasi proyek 
+                antara mahasiswa dan dosen dengan sistem gamifikasi yang menarik.
+            </p>
+            <div class="d-flex gap-2 justify-center">
+                <a href="pages/register.html" class="btn btn-lg btn-primary">Daftar Sekarang</a>
+                <a href="pages/login.html" class="btn btn-lg btn-outline">Login</a>
+                <button onclick="createDemoData()" class="btn btn-lg btn-secondary">Demo Data</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stat-item">
+            <h3 id="stat-mahasiswa">0</h3>
+            <p>Mahasiswa Terdaftar</p>
+        </div>
+        <div class="stat-item">
+            <h3 id="stat-dosen">0</h3>
+            <p>Dosen</p>
+        </div>
+        <div class="stat-item">
+            <h3 id="stat-proyek">0</h3>
+            <p>Proyek Aktif</p>
+        </div>
+        <div class="stat-item">
+            <h3 id="stat-prestasi">0</h3>
+            <p>Prestasi Tervalidasi</p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" style="padding: 4rem 0; background: white;">
+        <div class="container">
+            <h2 class="text-center mb-5">Fitur Utama KREASI</h2>
+            <div class="grid grid-3">
+                <!-- Feature 1 -->
+                <div class="card">
+                    <div class="card-icon">🏆</div>
+                    <h3 class="card-title">Validasi Prestasi</h3>
+                    <p class="card-text">
+                        Ajukan prestasi dan dapatkan validasi dari dosen. Setiap prestasi yang 
+                        disetujui memberikan +50 poin untuk portofolio Anda.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="card">
+                    <div class="card-icon">💼</div>
+                    <h3 class="card-title">Bursa Proyek</h3>
+                    <p class="card-text">
+                        Temukan dan bergabung dengan proyek kolaborasi atau buat proyek sendiri. 
+                        Diterima di proyek memberikan +30 poin.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="card">
+                    <div class="card-icon">👥</div>
+                    <h3 class="card-title">Talent Pool</h3>
+                    <p class="card-text">
+                        Database talenta mahasiswa untuk rekrutmen berbasis portofolio, keahlian, 
+                        dan prestasi yang tervalidasi.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="card">
+                    <div class="card-icon">⭐</div>
+                    <h3 class="card-title">Sistem Poin</h3>
+                    <p class="card-text">
+                        Kumpulkan poin dari prestasi dan proyek. Target: 200 poin untuk TAK/SAT, 
+                        500 poin untuk beasiswa.
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="card">
+                    <div class="card-icon">📄</div>
+                    <h3 class="card-title">SKPI Otomatis</h3>
+                    <p class="card-text">
+                        Generate SKPI otomatis dari semua aktivitas tervalidasi, prestasi, 
+                        dan proyek selama masa studi.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="card">
+                    <div class="card-icon">🌐</div>
+                    <h3 class="card-title">Cross-Department</h3>
+                    <p class="card-text">
+                        Kolaborasi lintas program studi terdokumentasi dengan baik dalam satu 
+                        sistem yang terintegrasi.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how" style="padding: 4rem 0; background: var(--light-color);">
+        <div class="container">
+            <h2 class="text-center mb-5">Cara Kerja Sistem</h2>
+            <div class="grid grid-2" style="gap: 3rem;">
+                <!-- Mahasiswa Flow -->
+                <div class="card">
+                    <h3 class="mb-3">👨‍🎓 Untuk Mahasiswa</h3>
+                    <ol style="line-height: 2;">
+                        <li><strong>Register</strong> - Buat akun mahasiswa dengan NIM</li>
+                        <li><strong>Lengkapi Profil</strong> - Tambah keahlian dan bio</li>
+                        <li><strong>Ajukan Prestasi</strong> - Upload bukti prestasi</li>
+                        <li><strong>Join Proyek</strong> - Daftar ke proyek yang sesuai</li>
+                        <li><strong>Kumpulkan Poin</strong> - Dapatkan poin dari validasi</li>
+                        <li><strong>Generate SKPI</strong> - Export portofolio lengkap</li>
+                    </ol>
+                </div>
+
+                <!-- Dosen Flow -->
+                <div class="card">
+                    <h3 class="mb-3">👨‍🏫 Untuk Dosen</h3>
+                    <ol style="line-height: 2;">
+                        <li><strong>Register</strong> - Buat akun dosen dengan NIP</li>
+                        <li><strong>Validasi Prestasi</strong> - Review dan approve/reject</li>
+                        <li><strong>Buat Proyek</strong> - Buat proyek penelitian/pengabdian</li>
+                        <li><strong>Cari Talenta</strong> - Search mahasiswa di talent pool</li>
+                        <li><strong>Rekrut Anggota</strong> - Terima/tolak pendaftar</li>
+                        <li><strong>Monitor</strong> - Pantau progress mahasiswa</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" style="padding: 4rem 0; background: white;">
+        <div class="container text-center">
+            <h2 class="mb-3">Tentang KREASI</h2>
+            <p style="max-width: 800px; margin: 0 auto 2rem; color: #666;">
+                KREASI (Kolaborasi dan Rekam Jejak) adalah platform akademik yang mendukung 
+                kolaborasi antara mahasiswa dan dosen. Sistem ini membantu mahasiswa mengelola 
+                portofolio, mendapatkan validasi prestasi, dan mencari rekan tim untuk berbagai 
+                proyek seperti lomba, penelitian, pengabdian masyarakat, dan lainnya.
+            </p>
+            <p style="max-width: 800px; margin: 0 auto; color: #666;">
+                Dengan sistem gamifikasi yang menarik, KREASI memotivasi mahasiswa untuk aktif 
+                dalam berbagai kegiatan akademik dan non-akademik dengan target poin TAK/SAT dan beasiswa.
+            </p>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section style="padding: 4rem 0; background: var(--gradient-1); color: white; text-align: center;">
+        <div class="container">
+            <h2 class="mb-3">Siap Bergabung dengan KREASI?</h2>
+            <p class="mb-4" style="opacity: 0.9;">
+                Daftar sekarang dan mulai bangun portofolio akademik Anda!
+            </p>
+            <a href="pages/register.html" class="btn btn-lg btn-outline">Daftar Sekarang</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 KREASI - Sistem Kolaborasi dan Rekam Jejak Mahasiswa Informatika</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">
+                Developed with ❤️ using HTML, CSS, and JavaScript
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script>
+        // Update stats on page load
+        window.addEventListener('load', function() {
+            const stats = getSystemStats();
+            document.getElementById('stat-mahasiswa').textContent = stats.totalMahasiswa;
+            document.getElementById('stat-dosen').textContent = stats.totalDosen;
+            document.getElementById('stat-proyek').textContent = stats.totalProyek;
+            document.getElementById('stat-prestasi').textContent = stats.totalPrestasi;
+        });
+    </script>
+</body>
+</html>
