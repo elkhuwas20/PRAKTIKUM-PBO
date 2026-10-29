@@ -1,456 +1,868 @@
-"""Versi terminal dari suite permutasi dan kombinasi pada index.html."""
+"""Versi terminal dari Permutasi & Kombinasi.html."""
 
-from collections import Counter
-from itertools import combinations, combinations_with_replacement, permutations
+from itertools import combinations, combinations_with_replacement, permutations, product
 from math import comb, factorial
-from pathlib import Path
-from typing import Iterable, Iterator, Sequence
+from typing import Callable, Iterable, Iterator, Sequence, TypeAlias
 
 
-LIST_CAP = 10_000
-FIRST_PAGE_SIZE = 50
-PAGE_SIZE = 500
-MAX_N = 100
-
-MODES = {
-    "1": ("Permutasi Standar", "perm"),
-    "2": ("Kombinasi Standar", "comb"),
-    "3": ("Permutasi Unsur Sama (Multiset)", "repeats"),
-    "4": ("Kombinasi Berulang & Permutasi Siklis", "rep_circ"),
-    "5": ("Hubungan Permutasi dan Kombinasi", "relation"),
-    "6": ("Visualizer Backtracking", "anim"),
-}
-
-PRESETS = {
-    "1": ("P(3,2) [A, B, C]", "perm", 3, 2, ["A", "B", "C"]),
-    "2": (
-        "C(5,3) Nama",
-        "comb",
-        5,
-        3,
-        ["Ani", "Budi", "Cici", "Dedi", "Eka"],
-    ),
-    "3": (
-        "Unsur Sama (BANANA)",
-        "repeats",
-        6,
-        None,
-        ["B", "A", "N", "A", "N", "A"],
-    ),
-    "4": (
-        "Pengulangan & Siklis",
-        "rep_circ",
-        4,
-        3,
-        ["A", "B", "C", "D"],
-    ),
-    "5": ("Hubungan P vs C", "relation", 4, 2, ["A", "B", "C", "D"]),
-    "6": ("Animasi Visual", "anim", 3, 2, ["A", "B", "C"]),
-}
+MAX_INPUT = 100
+BATAS_DAFTAR = 10_000
+UKURAN_HALAMAN = 50
+Step: TypeAlias = tuple[str, str, list[str]]
+MethodAction: TypeAlias = Callable[[], None]
 
 
-def format_number(value: int) -> str:
+def format_angka(value: int) -> str:
     return f"{value:,}".replace(",", ".")
 
 
-def permutation_count(n: int, r: int) -> int:
-    return factorial(n) // factorial(n - r)
+def faktor_menurun(high: int, low: int = 1) -> list[int]:
+    return list(range(high, low - 1, -1)) if high >= low else []
 
 
-def combination_count(n: int, r: int) -> int:
-    return comb(n, r)
+def uraikan_faktorial(value: int) -> str:
+    factors = faktor_menurun(value, 2)
+    return " x ".join(map(str, factors)) if factors else "1"
 
 
-def default_items(n: int) -> list[str]:
-    if n <= 26:
-        return [chr(ord("A") + index) for index in range(n)]
-    return [str(index + 1) for index in range(n)]
+def susun_faktor(factors: list[int]) -> str:
+    return " x ".join(map(str, factors)) if factors else "1"
 
 
-def read_nonnegative_int(prompt: str, maximum: int | None = None) -> int:
+def langkah_perkalian(factors: list[int]) -> tuple[list[str], int]:
+    if not factors:
+        return ["Tidak ada faktor, sehingga perkalian kosong bernilai 1."], 1
+    if len(factors) == 1:
+        return [f"Hanya ada satu faktor: {factors[0]}."], factors[0]
+
+    product = factors[0]
+    lines: list[str] = []
+    for factor in factors[1:]:
+        next_product = product * factor
+        lines.append(
+            f"{format_angka(product)} x {factor} = {format_angka(next_product)}"
+        )
+        product = next_product
+    return lines, product
+
+
+def keterangan_faktorial(value: int) -> str:
+    return f" Menurut definisi {value}! = 1." if value < 2 else ""
+
+
+def baca_bilangan_bulat(
+    prompt: str,
+    *,
+    minimum: int = 0,
+    maximum: int = MAX_INPUT,
+    default: int | None = None,
+) -> int:
     while True:
         raw = input(prompt).strip()
+        if not raw and default is not None:
+            return default
         try:
             value = int(raw)
         except ValueError:
-            print("Masukkan bilangan bulat.")
+            print("Masukkan bilangan bulat tanpa koma atau desimal.")
             continue
-        if value < 0:
-            print("Nilai tidak boleh negatif.")
+        if value < minimum:
+            print(f"Nilai minimal adalah {minimum}.")
             continue
-        if maximum is not None and value > maximum:
+        if value > maximum:
             print(f"Nilai maksimal adalah {maximum}.")
             continue
         return value
 
 
-def parse_items(raw: str, allow_duplicates: bool) -> list[str] | None:
-    if not raw.strip():
-        return None
-    items = [item.strip() for item in raw.split(",") if item.strip()]
-    if not items:
-        raise ValueError("Daftar item tidak valid.")
-    if not allow_duplicates and len(set(items)) != len(items):
-        duplicates = sorted(item for item, count in Counter(items).items() if count > 1)
-        raise ValueError(
-            "Item harus unik pada moda ini. Item berulang: "
-            + ", ".join(duplicates)
-            + '. Gunakan "Permutasi Unsur Sama" jika item memang berulang.'
-        )
-    if len(items) > MAX_N:
-        raise ValueError(f"Jumlah item maksimal adalah {MAX_N}.")
-    return items
+def baca_pilihan_ya_tidak(prompt: str, *, default: bool) -> bool:
+    while True:
+        raw = input(prompt).strip().lower()
+        if not raw:
+            return default
+        if raw in {"y", "ya", "yes"}:
+            return True
+        if raw in {"t", "tidak", "n", "no"}:
+            return False
+        print("Masukkan y (ya) atau t (tidak).")
 
 
-def get_inputs(
-    mode: str, preset: tuple[int, int | None, list[str]] | None = None
-) -> tuple[int, int | None, list[str]]:
-    allow_duplicates = mode in {"repeats", "rep_circ"}
-    if preset is None:
-        n = read_nonnegative_int(f"Masukkan n (maksimal {MAX_N}): ", MAX_N)
-        while True:
-            try:
-                items = parse_items(
-                    input(
-                        "Masukkan item dipisahkan koma "
-                        "(kosong = gunakan A, B, C, ...): "
-                    ),
-                    allow_duplicates,
-                )
-                break
-            except ValueError as error:
-                print(f"Input item tidak valid: {error}")
-        if items is not None:
-            n = len(items)
-            print(f"n disesuaikan menjadi {n} mengikuti jumlah item.")
-        else:
-            items = default_items(n)
+def baca_input_standar(
+    *,
+    defaults: tuple[int, int],
+    minimum_n: int = 0,
+    require_r_at_most_n: bool,
+) -> tuple[int, int, list[str]]:
+    n = baca_bilangan_bulat(
+        f"Masukkan n [{defaults[0]}]: ",
+        minimum=minimum_n,
+        default=defaults[0],
+    )
+    while True:
+        r = baca_bilangan_bulat(f"Masukkan r [{defaults[1]}]: ", default=defaults[1])
+        if not require_r_at_most_n or r <= n:
+            break
+        print(f"Nilai r ({r}) tidak boleh lebih besar dari n ({n}).")
+    unsur = baca_nama_unsur(n)
+    return n, r, unsur
+
+
+def baca_nama_unsur(jumlah: int) -> list[str]:
+    if jumlah <= 26:
+        bawaan = [chr(ord("A") + indeks) for indeks in range(jumlah)]
     else:
-        n, _, items = preset
+        bawaan = [str(indeks + 1) for indeks in range(jumlah)]
 
-    if mode == "repeats":
-        return n, None, items
+    while True:
+        raw = input(
+            "Masukkan nama unsur dipisahkan koma "
+            f"(tekan Enter untuk {', '.join(bawaan)}): "
+        ).strip()
+        if not raw:
+            return bawaan
 
-    if preset is None:
-        while True:
-            r = read_nonnegative_int("Masukkan r: ")
-            if mode not in {"perm", "comb", "relation", "anim"} or r <= n:
-                break
-            print(f"Nilai r ({r}) tidak boleh lebih besar dari n ({n}).")
-    else:
-        r = preset[1]
-        assert r is not None
-
-    if mode in {"perm", "comb", "relation", "anim"} and r > n:
-        raise ValueError(f"Nilai r ({r}) tidak boleh lebih besar dari n ({n}).")
-    return n, r, items
-
-
-def bounded_results(results: Iterable[Sequence[str]]) -> Iterator[str]:
-    for index, result in enumerate(results):
-        if index >= LIST_CAP:
-            return
-        yield " ".join(result) if result else "(kosong)"
+        unsur = [nama.strip() for nama in raw.split(",")]
+        if len(unsur) != jumlah:
+            print(
+                f"Jumlah nama harus tepat {jumlah}, sesuai nilai n. "
+                f"Anda memasukkan {len(unsur)} nama."
+            )
+            continue
+        if any(not nama for nama in unsur):
+            print("Nama unsur tidak boleh kosong.")
+            continue
+        if len(set(unsur)) != len(unsur):
+            print("Nama setiap unsur harus berbeda.")
+            continue
+        return unsur
 
 
-def show_results(
-    title: str,
-    results: Iterable[str],
-    total: int,
-    mode_name: str,
-) -> list[str]:
-    iterator = iter(results)
-    shown: list[str] = []
-    limit = min(total, LIST_CAP)
-    batch_size = min(FIRST_PAGE_SIZE, limit)
+def hasil_berlabel(hasil: Iterable[Sequence[str]]) -> Iterator[str]:
+    for urutan in hasil:
+        yield " ".join(urutan) if urutan else "(susunan kosong)"
 
-    while len(shown) < limit:
-        count = min(batch_size, limit - len(shown))
-        for _ in range(count):
+
+def tampilkan_daftar(
+    judul: str,
+    hasil: Iterable[str],
+    jumlah_hasil: int,
+) -> None:
+    batas = min(jumlah_hasil, BATAS_DAFTAR)
+    iterator = iter(hasil)
+    sudah_ditampilkan = 0
+    ukuran_halaman = min(UKURAN_HALAMAN, batas)
+
+    print(f"\n{judul}:")
+    while sudah_ditampilkan < batas:
+        awal_halaman = sudah_ditampilkan
+        for _ in range(min(ukuran_halaman, batas - sudah_ditampilkan)):
             try:
-                shown.append(next(iterator))
+                susunan = next(iterator)
             except StopIteration:
                 break
-        print(f"\n{title} - menampilkan {len(shown)} dari {format_number(total)}:")
-        start = max(0, len(shown) - count)
-        for index in range(start, len(shown)):
-            print(f"{index + 1:>5}. {shown[index]}")
-        if len(shown) >= limit or len(shown) == total:
-            break
-        action = input(
-            "\nEnter: 500 berikutnya | a: tampilkan semua | "
-            "s: lewati daftar: "
-        ).strip().lower()
-        if action == "s":
-            break
-        batch_size = limit - len(shown) if action == "a" else PAGE_SIZE
+            sudah_ditampilkan += 1
+            print(f"{sudah_ditampilkan:>5}. {susunan}")
 
-    if total > LIST_CAP:
-        print(f"Daftar dibatasi hingga {format_number(LIST_CAP)} hasil pertama.")
-    if not shown:
-        print(f"\n{title}: tidak ada hasil.")
-
-    if shown and input("\nSimpan hasil yang ditampilkan ke file .txt? (y/n): ").strip().lower() == "y":
-        path = Path(__file__).with_name(f"hasil_{mode_name}.txt")
-        with path.open("w", encoding="utf-8") as output:
-            output.write(f"=== HASIL PERHITUNGAN {mode_name.upper()} ===\n")
-            output.write(f"Total kemungkinan: {format_number(total)}\n")
-            output.write(f"Jumlah yang disimpan: {len(shown)}\n\nDaftar:\n")
-            output.writelines(
-                f"{index}. {result}\n" for index, result in enumerate(shown, 1)
-            )
-        print(f"Hasil disimpan di: {path}")
-    return shown
-
-
-def unique_permutations(items: Sequence[str]) -> Iterator[tuple[str, ...]]:
-    counts = Counter(items)
-    keys = sorted(counts)
-    current: list[str] = []
-
-    def generate() -> Iterator[tuple[str, ...]]:
-        if len(current) == len(items):
-            yield tuple(current)
-            return
-        for item in keys:
-            if counts[item] == 0:
-                continue
-            counts[item] -= 1
-            current.append(item)
-            yield from generate()
-            current.pop()
-            counts[item] += 1
-
-    yield from generate()
-
-
-def print_permutation(n: int, r: int, items: list[str]) -> None:
-    total = permutation_count(n, r)
-    print(f"\nModa: Permutasi Standar")
-    print(f"n = {n}, r = {r}")
-    print(f"Langkah 1: P({n},{r}) = {n}! / ({n} - {r})!")
-    print(f"Langkah 2: P({n},{r}) = {n}! / {n-r}! = {format_number(total)}")
-    print("Urutan diperhitungkan.")
-    show_results(
-        "Daftar Permutasi",
-        bounded_results(permutations(items, r)),
-        total,
-        "perm",
-    )
-
-
-def print_combination(n: int, r: int, items: list[str]) -> None:
-    total = combination_count(n, r)
-    print(f"\nModa: Kombinasi Standar")
-    print(f"n = {n}, r = {r}")
-    print(f"Langkah 1: C({n},{r}) = {n}! / ({r}! x ({n} - {r})!)")
-    print(f"Langkah 2: C({n},{r}) = {format_number(total)}")
-    print("Urutan tidak diperhitungkan.")
-    show_results(
-        "Daftar Kombinasi",
-        bounded_results(combinations(items, r)),
-        total,
-        "comb",
-    )
-
-
-def print_multiset(items: list[str]) -> None:
-    counts = Counter(items)
-    denominator = 1
-    for count in counts.values():
-        denominator *= factorial(count)
-    total = factorial(len(items)) // denominator
-    frequencies = ", ".join(
-        f"{item}: {count}" for item, count in sorted(counts.items())
-    )
-    denominator_formula = " x ".join(
-        f"{count}!" for count in counts.values()
-    ) or "1"
-    print("\nModa: Permutasi Unsur Sama (Multiset)")
-    print(f"n = {len(items)}")
-    print(f"Frekuensi elemen: {frequencies}")
-    print(f"P = {len(items)}! / ({denominator_formula})")
-    print(f"Total susunan unik = {format_number(total)}")
-    show_results(
-        "Daftar Susunan Unik",
-        bounded_results(unique_permutations(items)),
-        total,
-        "repeats",
-    )
-
-
-def print_repetition_and_circular(n: int, r: int, items: list[str]) -> None:
-    repeated_total = comb(n + r - 1, r) if n else int(r == 0)
-    circular_total = factorial(n - 1) if n else 0
-    print("\nModa: Kombinasi Berulang & Permutasi Siklis")
-    print(f"n = {n}, r = {r}")
-    print(
-        f"Kombinasi berulang: C'({n},{r}) = "
-        f"C({n} + {r} - 1,{r}) = {format_number(repeated_total)}"
-    )
-    print(
-        f"Permutasi siklis: P_siklis({n}) = ({n} - 1)! "
-        f"= {format_number(circular_total)}"
-    )
-    show_results(
-        "Daftar Kombinasi dengan Pengulangan",
-        bounded_results(combinations_with_replacement(items, r)),
-        repeated_total,
-        "rep_circ",
-    )
-
-
-def print_relation(n: int, r: int, items: list[str]) -> None:
-    c_value = combination_count(n, r)
-    p_value = permutation_count(n, r)
-    r_factorial = factorial(r)
-    print("\nModa: Hubungan Permutasi dan Kombinasi")
-    print(f"P({n},{r}) = C({n},{r}) x {r}!")
-    print(
-        f"{format_number(p_value)} = {format_number(c_value)} x "
-        f"{format_number(r_factorial)}"
-    )
-    print("Pengelompokan permutasi berdasarkan kombinasinya:")
-
-    def groups() -> Iterator[str]:
-        per_group_limit = r_factorial if p_value <= LIST_CAP else 50
-        for index, selected in enumerate(combinations(items, r), 1):
-            group_permutations: list[str] = []
-            for permutation_index, permutation in enumerate(permutations(selected)):
-                if permutation_index == per_group_limit:
-                    break
-                group_permutations.append(" ".join(permutation))
-            yield (
-                f"Kombinasi #{index}: {{ {', '.join(selected)} }} -> "
-                + " | ".join(group_permutations)
-            )
-
-    group_total = min(c_value, LIST_CAP)
-    show_results(
-        "Kelompok Kombinasi",
-        groups(),
-        group_total,
-        "relation",
-    )
-    if p_value > LIST_CAP:
         print(
-            "Catatan: hasil dibatasi; setiap kelompok menampilkan maksimal "
-            "50 susunan dan daftar maksimal 10.000 kelompok."
+            f"Menampilkan {sudah_ditampilkan} dari "
+            f"{format_angka(jumlah_hasil)} hasil."
+        )
+        if sudah_ditampilkan >= batas:
+            break
+        if sudah_ditampilkan == awal_halaman:
+            break
+        pilihan = input(
+            "Tekan Enter untuk melihat berikutnya, "
+            "a untuk tampilkan semua, atau s untuk lewati: "
+        ).strip().lower()
+        if pilihan == "s":
+            break
+        ukuran_halaman = (
+            batas - sudah_ditampilkan if pilihan == "a" else UKURAN_HALAMAN
         )
 
-
-def backtracking_steps(
-    current: list[str], available: list[str], r: int
-) -> Iterator[tuple[str, list[str]]]:
-    yield ("PILIH", current.copy())
-    if len(current) == r:
-        yield ("DITEMUKAN", current.copy())
-        return
-    for index, item in enumerate(available):
-        current.append(item)
-        yield from backtracking_steps(
-            current, available[:index] + available[index + 1 :], r
+    if jumlah_hasil > BATAS_DAFTAR:
+        print(
+            f"Daftar dibatasi hingga {format_angka(BATAS_DAFTAR)} "
+            "hasil pertama."
         )
-        current.pop()
-        yield ("KEMBALI", current.copy())
+    if jumlah_hasil == 0:
+        print("Tidak ada hasil.")
 
 
-def print_animation(n: int, r: int, items: list[str]) -> None:
-    print("\nModa: Visualizer Backtracking (Permutasi)")
-    if n > 5 or r > 4:
-        print("Visualisasi memerlukan n <= 5 dan r <= 4.")
-        return
-    steps = list(backtracking_steps([], items[:n], r))
-    step_by_step = input("Jalankan langkah satu per satu? (y/n): ").strip().lower() == "y"
-    for index, (action, path) in enumerate(steps, 1):
-        path_text = ", ".join(path) if path else "Root"
-        message = {
-            "PILIH": "Pilih/kunjungi",
-            "DITEMUKAN": "Susunan ditemukan",
-            "KEMBALI": "Backtrack ke",
-        }[action]
-        print(f"[Langkah {index}/{len(steps)}] {message}: [{path_text}]")
-        if step_by_step and index < len(steps):
-            input("Tekan Enter untuk lanjut...")
+def buat_langkah_permutasi(n: int, r: int) -> tuple[int, str, list[Step]]:
+    remaining = n - r
+    result = factorial(n) // factorial(remaining)
+    kept_factors = faktor_menurun(n, remaining + 1)
+    product_lines, _ = langkah_perkalian(kept_factors)
+    label = f"P({n},{r})"
+    steps: list[Step] = [
+        (
+            "Rumus umum",
+            "n adalah jumlah seluruh objek, r adalah jumlah objek yang dipilih, "
+            "dan tanda faktorial (!) berarti perkalian bilangan bulat berurutan "
+            "dari bilangan itu turun sampai 1.",
+            ["P(n,r) = n! / (n - r)!"],
+        ),
+        (
+            "Substitusi nilai input",
+            f"Ganti n dengan {n} dan r dengan {r}, lalu hitung bagian dalam "
+            f"kurung: {n} - {r} = {remaining}.",
+            [
+                f"{label} = {n}! / ({n} - {r})!",
+                f"{label} = {n}! / {remaining}!",
+            ],
+        ),
+        (
+            "Uraikan faktorial",
+            "Tulis setiap faktorial sebagai perkalian lengkap."
+            + keterangan_faktorial(n)
+            + keterangan_faktorial(remaining),
+            [
+                f"{n}! = {uraikan_faktorial(n)}",
+                f"{remaining}! = {uraikan_faktorial(remaining)}",
+                f"{label} = ({uraikan_faktorial(n)}) / "
+                f"({uraikan_faktorial(remaining)})",
+            ],
+        ),
+        (
+            "Sederhanakan pecahan",
+            (
+                f"Penyebut {remaining}! sama dengan faktor terakhir pada "
+                f"pembilang. Faktor yang sama dicoret."
+                if remaining >= 1
+                else f"Penyebut {remaining}! = 1, sehingga tidak ada faktor "
+                "yang dapat dicoret dan pembilang tetap utuh."
+            ),
+            [
+                f"{label}: {remaining}! dicoret dari pembilang dan penyebut.",
+                f"{label} = {susun_faktor(kept_factors)}",
+            ],
+        ),
+        (
+            "Lakukan perkalian",
+            f"Kalikan {r} faktor yang tersisa dari kiri ke kanan.",
+            product_lines,
+        ),
+        (
+            "Hasil akhir",
+            f"Terdapat {format_angka(result)} susunan berbeda jika {r} elemen "
+            f"dipilih dari {n} elemen yang tersedia dan urutannya diperhitungkan.",
+            [],
+        ),
+    ]
+    return result, label, steps
 
 
-def print_formulas() -> None:
-    print("\nRumus Permutasi & Kombinasi")
-    print("1. Permutasi standar:       P(n,r) = n! / (n-r)!")
-    print("2. Kombinasi standar:       C(n,r) = n! / (r! (n-r)!)")
-    print("3. Permutasi unsur sama:    P = n! / (n1! n2! ... nk!)")
-    print("4. Kombinasi pengulangan:   C'(n,r) = C(n+r-1,r)")
-    print("5. Permutasi siklis:        P_siklis = (n-1)!")
+def buat_langkah_kombinasi(n: int, r: int) -> tuple[int, str, list[Step]]:
+    remaining = n - r
+    result = comb(n, r)
+    numerator_factors = faktor_menurun(n, remaining + 1)
+    numerator_lines, numerator_value = langkah_perkalian(numerator_factors)
+    denominator_factors = faktor_menurun(r, 2)
+    denominator_lines, denominator_value = langkah_perkalian(denominator_factors)
+    label = f"C({n},{r})"
+    steps: list[Step] = [
+        (
+            "Rumus umum",
+            "n adalah jumlah seluruh objek, r adalah jumlah objek yang dipilih, "
+            "dan faktorial (!) adalah perkalian bilangan bulat berurutan sampai "
+            "1. Pada kombinasi, urutan tidak diperhitungkan.",
+            ["C(n,r) = n! / (r! (n - r)!)"],
+        ),
+        (
+            "Substitusi nilai input",
+            f"Ganti n dengan {n} dan r dengan {r}, lalu hitung bagian dalam "
+            f"kurung: {n} - {r} = {remaining}.",
+            [
+                f"{label} = {n}! / ({r}! ({n} - {r})!)",
+                f"{label} = {n}! / ({r}! x {remaining}!)",
+            ],
+        ),
+        (
+            "Uraikan seluruh faktorial",
+            "Tulis setiap faktorial sebagai perkalian lengkap."
+            + keterangan_faktorial(n)
+            + keterangan_faktorial(r)
+            + keterangan_faktorial(remaining),
+            [
+                f"{n}! = {uraikan_faktorial(n)}",
+                f"{r}! = {uraikan_faktorial(r)}",
+                f"{remaining}! = {uraikan_faktorial(remaining)}",
+                f"{label} = ({uraikan_faktorial(n)}) / "
+                f"(({uraikan_faktorial(r)}) x "
+                f"({uraikan_faktorial(remaining)}))",
+            ],
+        ),
+        (
+            "Sederhanakan faktorial",
+            (
+                f"Faktorial (n - r)! = {remaining}! pada penyebut sama dengan "
+                "faktor terakhir pada pembilang. Faktor yang sama dicoret."
+                if remaining >= 1
+                else f"Karena (n - r)! = 0! = 1, tidak ada faktor yang dapat "
+                f"dicoret. Pembilang tetap n! dan penyebut tetap {r}!."
+            ),
+            [
+                f"{label}: {remaining}! dicoret dari pembilang dan penyebut.",
+                f"{label} = ({susun_faktor(numerator_factors)}) / "
+                f"({uraikan_faktorial(r)})",
+            ],
+        ),
+        (
+            "Hitung pembilang dan penyebut",
+            "Hitung pembilang dan penyebut secara terpisah.",
+            [
+                "Pembilang:",
+                *numerator_lines,
+                f"{susun_faktor(numerator_factors)} = "
+                f"{format_angka(numerator_value)}",
+                "Penyebut:",
+                *denominator_lines,
+                f"{uraikan_faktorial(r)} = {format_angka(denominator_value)}",
+            ],
+        ),
+        (
+            "Lakukan pembagian",
+            "Bagi hasil pembilang dengan hasil penyebut.",
+            [
+                f"{label} = {format_angka(numerator_value)} / "
+                f"{format_angka(denominator_value)}",
+                f"{label} = {format_angka(result)}",
+            ],
+        ),
+        (
+            "Hasil akhir",
+            f"Terdapat {format_angka(result)} cara berbeda untuk memilih {r} "
+            f"elemen dari {n} elemen jika urutan pemilihannya tidak diperhitungkan.",
+            [],
+        ),
+    ]
+    return result, label, steps
 
 
-def run_mode(
-    mode: str, preset: tuple[int, int | None, list[str]] | None = None
+def buat_langkah_permutasi_berulang(
+    n: int, r: int
+) -> tuple[int, str, list[Step]]:
+    result = n**r
+    factors = [n] * r
+    product_lines, _ = langkah_perkalian(factors)
+    label = f"P_ulang({n},{r})"
+    conclusion = (
+        f"Setiap posisi memiliki {n} pilihan dan terdapat {r} posisi, sehingga "
+        f"total susunan yang mungkin adalah {susun_faktor(factors)} = "
+        f"{format_angka(result)}."
+        if r > 0
+        else "Tidak ada posisi yang diisi, sehingga terdapat tepat 1 susunan "
+        "(susunan kosong)."
+    )
+    zero_power_note = (
+        " Untuk n = 0 dan r = 0 digunakan konvensi pencacahan: ada satu "
+        "susunan kosong."
+        if n == 0 and r == 0
+        else ""
+    )
+    steps: list[Step] = [
+        (
+            "Rumus umum",
+            "n adalah banyak pilihan pada setiap posisi dan r adalah banyak "
+            "posisi. Elemen boleh dipakai berulang, jadi setiap posisi selalu "
+            "memiliki n pilihan. Nilai r boleh lebih besar dari n.",
+            ["P_ulang(n,r) = n^r"],
+        ),
+        (
+            "Substitusi nilai input",
+            f"Ganti n dengan {n} dan r dengan {r}.",
+            [f"{label} = {n}^{r}"],
+        ),
+        (
+            "Uraikan perpangkatan",
+            (
+                f"Pangkat {r} berarti {n} dikalikan sebanyak {r} kali, satu "
+                "faktor untuk setiap posisi."
+                if r > 0
+                else f"Setiap bilangan berpangkat 0 bernilai 1.{zero_power_note}"
+            ),
+            [f"{n}^{r} = {susun_faktor(factors)}"],
+        ),
+        (
+            "Lakukan perkalian",
+            "Kalikan faktor dari kiri ke kanan dan perhatikan nilai antaranya.",
+            product_lines,
+        ),
+        ("Hasil akhir", conclusion, []),
+    ]
+    return result, label, steps
+
+
+def buat_langkah_permutasi_melingkar(n: int) -> tuple[int, str, list[Step]]:
+    remaining = n - 1
+    result = factorial(remaining)
+    factors = faktor_menurun(remaining, 1)
+    product_lines, _ = langkah_perkalian(factors)
+    label = f"P_melingkar({n})"
+    steps: list[Step] = [
+        (
+            "Rumus umum",
+            "n adalah jumlah objek yang disusun melingkar. Susunan yang hanya "
+            "berbeda karena rotasi dianggap sama, sehingga satu objek dijadikan "
+            "patokan dan sisanya (n - 1) objek disusun.",
+            ["P_melingkar(n) = (n - 1)!"],
+        ),
+        (
+            "Substitusi nilai input",
+            f"Ganti n dengan {n}.",
+            [f"{label} = ({n} - 1)!"],
+        ),
+        (
+            "Hitung n - 1",
+            f"{n} - 1 = {remaining}.",
+            [f"{label} = {remaining}!"],
+        ),
+        (
+            "Uraikan faktorial",
+            (
+                f"Menurut definisi {remaining}! = 1."
+                if remaining < 2
+                else f"Tulis {remaining}! sebagai perkalian lengkap."
+            ),
+            [f"{remaining}! = {uraikan_faktorial(remaining)}"],
+        ),
+        (
+            "Lakukan perkalian",
+            "Kalikan faktor secara bertahap.",
+            product_lines,
+        ),
+        (
+            "Hasil akhir",
+            f"{n} objek yang disusun mengelilingi meja bundar menghasilkan "
+            f"{format_angka(result)} susunan berbeda jika susunan yang hanya "
+            "berbeda karena rotasi dianggap sama.",
+            [],
+        ),
+    ]
+    return result, label, steps
+
+
+def buat_langkah_unsur_identik(
+    group_counts: list[int],
+) -> tuple[int, str, list[Step]]:
+    total_items = sum(group_counts)
+    denominator = 1
+    for count in group_counts:
+        denominator *= factorial(count)
+    result = factorial(total_items) // denominator
+
+    largest_index = max(range(len(group_counts)), key=group_counts.__getitem__)
+    largest_count = group_counts[largest_index]
+    numerator_factors = faktor_menurun(total_items, largest_count + 1)
+    denominator_factors = [
+        factor
+        for index, count in enumerate(group_counts)
+        if index != largest_index
+        for factor in faktor_menurun(count, 2)
+    ]
+    numerator_lines, numerator_value = langkah_perkalian(numerator_factors)
+    denominator_lines, denominator_value = langkah_perkalian(denominator_factors)
+    denominator_expansion = " x ".join(
+        f"({uraikan_faktorial(count)})" for count in group_counts
+    )
+
+    steps: list[Step] = [
+        (
+            "Identifikasi kelompok unsur identik",
+            f"Terdapat {len(group_counts)} kelompok. Unsur dalam satu kelompok "
+            "identik, sehingga menukar posisinya tidak menghasilkan susunan "
+            "baru. Jumlah seluruh unsur adalah total semua kelompok.",
+            [
+                *(f"n{index} = {count}" for index, count in enumerate(group_counts, 1)),
+                f"n = {' + '.join(map(str, group_counts))} = {total_items}",
+            ],
+        ),
+        (
+            "Rumus umum",
+            "n adalah jumlah seluruh unsur dan n1, n2, ..., nk adalah jumlah "
+            "unsur pada tiap kelompok identik.",
+            ["P = n! / (n1! x n2! x ... x nk!)"],
+        ),
+        (
+            "Substitusi nilai input",
+            f"Ganti n dengan {total_items} dan setiap ni dengan jumlah kelompoknya.",
+            [
+                f"P = {total_items}! / "
+                f"({' x '.join(f'{count}!' for count in group_counts)})"
+            ],
+        ),
+        (
+            "Uraikan faktorial",
+            "Tulis pembilang dan setiap faktorial penyebut secara lengkap."
+            + (
+                " Menurut definisi 0! = 1 dan 1! = 1."
+                if any(value < 2 for value in [total_items, *group_counts])
+                else ""
+            ),
+            [
+                f"{total_items}! = {uraikan_faktorial(total_items)}",
+                *(
+                    f"{count}! = {uraikan_faktorial(count)}"
+                    for count in group_counts
+                ),
+                f"P = ({uraikan_faktorial(total_items)}) / "
+                f"({denominator_expansion})",
+            ],
+        ),
+        (
+            "Sederhanakan faktor yang sama",
+            (
+                f"Faktorial terbesar pada penyebut adalah {largest_count}! "
+                f"(kelompok {largest_index + 1}). Faktor itu juga muncul pada "
+                "pembilang, jadi dapat dicoret."
+                if largest_count >= 1
+                else "Semua faktorial penyebut bernilai 1, sehingga tidak ada "
+                "faktor yang dicoret."
+            ),
+            [
+                f"P = ({susun_faktor(numerator_factors)}) / "
+                f"({denominator_expansion})",
+            ],
+        ),
+        (
+            "Hitung pembilang dan penyebut",
+            "Hitung pembilang dan penyebut secara terpisah.",
+            [
+                "Pembilang:",
+                *numerator_lines,
+                f"{susun_faktor(numerator_factors)} = "
+                f"{format_angka(numerator_value)}",
+                "Penyebut:",
+                *denominator_lines,
+                f"{susun_faktor(denominator_factors)} = "
+                f"{format_angka(denominator_value)}",
+            ],
+        ),
+        (
+            "Lakukan pembagian",
+            f"Bagi pembilang dengan penyebut: {format_angka(numerator_value)} "
+            f"/ {format_angka(denominator_value)}.",
+            [
+                f"P = {format_angka(numerator_value)} / "
+                f"{format_angka(denominator_value)}",
+                f"P = {format_angka(result)}",
+            ],
+        ),
+        (
+            "Hasil akhir",
+            f"Terdapat {format_angka(result)} susunan berbeda dari "
+            f"{total_items} unsur dengan kelompok identik "
+            f"{', '.join(map(str, group_counts))} (unsur identik tidak dibedakan).",
+            [],
+        ),
+    ]
+    return result, "P", steps
+
+
+def buat_langkah_kombinasi_berulang(
+    n: int, r: int
+) -> tuple[int, str, list[Step]]:
+    transformed_n = n + r - 1
+    result = comb(transformed_n, r)
+    label = f"C_ulang({n},{r})"
+    _, _, standard_steps = buat_langkah_kombinasi(transformed_n, r)
+    transformed_steps = standard_steps[:-1]
+    transformed_steps[0] = (
+        "Ubah ke bentuk faktorial",
+        f"Kombinasi C({transformed_n},{r}) ditulis dengan faktorial sebagai "
+        f"{transformed_n}! dibagi {r}! dan ({transformed_n} - {r})!.",
+        transformed_steps[0][2],
+    )
+    transformed_steps[1] = (
+        "Substitusi ke bentuk faktorial",
+        f"Pakai {transformed_n} sebagai pengganti n. Bagian dalam kurung: "
+        f"{transformed_n} - {r} = {n - 1} (sama dengan n - 1).",
+        transformed_steps[1][2],
+    )
+    steps: list[Step] = [
+        (
+            "Rumus umum",
+            "n adalah banyak jenis elemen dan r adalah banyak elemen yang "
+            "dipilih. Elemen boleh dipilih berulang dan urutan tidak "
+            "diperhitungkan. Nilai r boleh lebih besar dari n.",
+            [
+                "C_ulang(n,r) = C(n + r - 1, r) "
+                "= (n + r - 1)! / (r! (n - 1)!)"
+            ],
+        ),
+        (
+            "Substitusi nilai input",
+            f"Ganti n dengan {n} dan r dengan {r}, lalu hitung "
+            f"n + r - 1 = {n} + {r} - 1 = {transformed_n}.",
+            [
+                f"{label} = C({n} + {r} - 1, {r})",
+                f"{label} = C({transformed_n}, {r})",
+            ],
+        ),
+        *transformed_steps,
+        (
+            "Hasil akhir",
+            f"Terdapat {format_angka(result)} cara memilih {r} elemen dari "
+            f"{n} jenis elemen jika elemen yang sama boleh dipilih berulang "
+            "kali dan urutan tidak diperhitungkan.",
+            [],
+        ),
+    ]
+    return result, label, steps
+
+
+def tampilkan_hasil(
+    method_name: str,
+    formula: str,
+    result: int,
+    steps: list[Step],
+    *,
+    conclusion: str,
+    daftar: Iterable[str] | None = None,
+    jumlah_hasil: int = 0,
 ) -> None:
-    n, r, items = get_inputs(mode, preset)
-    if mode == "repeats":
-        print_multiset(items)
-        return
-    assert r is not None
-    if mode == "perm":
-        print_permutation(n, r, items)
-    elif mode == "comb":
-        print_combination(n, r, items)
-    elif mode == "rep_circ":
-        print_repetition_and_circular(n, r, items)
-    elif mode == "relation":
-        print_relation(n, r, items)
-    elif mode == "anim":
-        print_animation(n, r, items)
+    print(f"\nProses Penghitungan {method_name}")
+    print(f"Rumus metode: {formula}")
+    for index, (title, description, math_lines) in enumerate(steps, 1):
+        print(f"\nLangkah {index}: {title}")
+        print(description)
+        for line in math_lines:
+            print(f"  {line}")
+    print(f"\n{formula} = {format_angka(result)}")
+    print(conclusion)
+    if daftar is not None:
+        tampilkan_daftar("Daftar hasil", daftar, jumlah_hasil)
 
 
-def print_menu() -> None:
-    print("\n=== PERMUTASI & KOMBINASI (TERMINAL) ===")
-    for key, (title, _) in MODES.items():
-        print(f"{key}. {title}")
-    print("7. Rumus")
-    print("8. Contoh cepat")
-    print("0. Keluar")
+def jalankan_permutasi_standar() -> None:
+    n, r, unsur = baca_input_standar(
+        defaults=(5, 3),
+        require_r_at_most_n=True,
+    )
+    result, label, steps = buat_langkah_permutasi(n, r)
+    tampilkan_hasil(
+        "Permutasi Standar",
+        label,
+        result,
+        steps,
+        conclusion="Urutan diperhitungkan dan elemen tidak diulang.",
+        daftar=hasil_berlabel(permutations(unsur, r)),
+        jumlah_hasil=result,
+    )
 
 
-def run_preset() -> None:
-    print("\nContoh cepat:")
-    for key, (title, _, _, _, _) in PRESETS.items():
-        print(f"{key}. {title}")
-    print("0. Kembali")
-    choice = input("Pilih contoh: ").strip()
-    if choice == "0":
-        return
-    preset = PRESETS.get(choice)
-    if preset is None:
-        print("Pilihan contoh tidak valid.")
-        return
-    title, mode, n, r, items = preset
-    print(f"\nContoh: {title}")
-    run_mode(mode, (n, r, items))
+def jalankan_permutasi_berulang() -> None:
+    n, r, unsur = baca_input_standar(
+        defaults=(3, 2),
+        require_r_at_most_n=False,
+    )
+    result, label, steps = buat_langkah_permutasi_berulang(n, r)
+    tampilkan_hasil(
+        "Permutasi Berulang",
+        label,
+        result,
+        steps,
+        conclusion="Urutan diperhitungkan dan elemen boleh diulang.",
+        daftar=hasil_berlabel(product(unsur, repeat=r)),
+        jumlah_hasil=result,
+    )
 
 
-def main() -> None:
+def jalankan_unsur_identik() -> None:
     while True:
-        print_menu()
+        group_count = baca_bilangan_bulat(
+            "Jumlah kelompok unsur identik [2]: ",
+            minimum=1,
+            default=2,
+        )
+        group_counts = [
+            baca_bilangan_bulat(f"Jumlah unsur pada kelompok {index} [2]: ", default=2)
+            for index in range(1, group_count + 1)
+        ]
+        total_items = sum(group_counts)
+        if total_items > MAX_INPUT:
+            print(f"Total unsur ({total_items}) melebihi batas {MAX_INPUT}.")
+            continue
+        if group_count > total_items:
+            print(
+                f"Banyak kelompok ({group_count}) tidak boleh melebihi jumlah "
+                f"seluruh unsur ({total_items})."
+            )
+            continue
+        if baca_pilihan_ya_tidak(
+            f"Hitung n otomatis dari total kelompok ({total_items})? [y]: ",
+            default=True,
+        ):
+            break
+        while True:
+            n = baca_bilangan_bulat("Masukkan total n: ")
+            if n == total_items:
+                break
+            print(
+                f"Jumlah seluruh kelompok ({total_items}) harus sama dengan n ({n})."
+            )
+        break
+
+    result, label, steps = buat_langkah_unsur_identik(group_counts)
+    tampilkan_hasil(
+        "Permutasi dengan Unsur Identik",
+        label,
+        result,
+        steps,
+        conclusion="Unsur dalam kelompok yang sama dianggap identik.",
+    )
+
+
+def jalankan_permutasi_melingkar() -> None:
+    n = baca_bilangan_bulat("Masukkan n [4]: ", minimum=1, default=4)
+    result, label, steps = buat_langkah_permutasi_melingkar(n)
+    tampilkan_hasil(
+        "Permutasi Melingkar",
+        label,
+        result,
+        steps,
+        conclusion="Susunan yang hanya berbeda karena rotasi dianggap sama.",
+    )
+
+
+def jalankan_kombinasi_standar() -> None:
+    n, r, unsur = baca_input_standar(
+        defaults=(5, 3),
+        require_r_at_most_n=True,
+    )
+    result, label, steps = buat_langkah_kombinasi(n, r)
+    tampilkan_hasil(
+        "Kombinasi Standar",
+        label,
+        result,
+        steps,
+        conclusion="Urutan tidak diperhitungkan dan elemen tidak diulang.",
+        daftar=hasil_berlabel(combinations(unsur, r)),
+        jumlah_hasil=result,
+    )
+
+
+def jalankan_kombinasi_berulang() -> None:
+    n, r, unsur = baca_input_standar(
+        defaults=(3, 2),
+        minimum_n=1,
+        require_r_at_most_n=False,
+    )
+    result, label, steps = buat_langkah_kombinasi_berulang(n, r)
+    tampilkan_hasil(
+        "Kombinasi Berulang",
+        label,
+        result,
+        steps,
+        conclusion="Urutan tidak diperhitungkan dan elemen boleh diulang.",
+        daftar=hasil_berlabel(combinations_with_replacement(unsur, r)),
+        jumlah_hasil=result,
+    )
+
+
+PERMUTATION_METHODS = {
+    "1": ("Permutasi Standar", jalankan_permutasi_standar),
+    "2": ("Permutasi Berulang", jalankan_permutasi_berulang),
+    "3": ("Unsur Identik", jalankan_unsur_identik),
+    "4": ("Permutasi Melingkar", jalankan_permutasi_melingkar),
+}
+
+COMBINATION_METHODS = {
+    "1": ("Kombinasi Standar", jalankan_kombinasi_standar),
+    "2": ("Kombinasi Berulang", jalankan_kombinasi_berulang),
+}
+
+
+def tampilkan_rumus() -> None:
+    print("\n=== RUMUS PERMUTASI & KOMBINASI ===")
+    references = [
+        (
+            "Permutasi Standar",
+            "P(n,r) = n! / (n - r)!",
+            "Urutan diperhitungkan, elemen tidak diulang, 0 <= r <= n.",
+        ),
+        (
+            "Permutasi dengan Pengulangan",
+            "P_ulang(n,r) = n^r",
+            "Urutan diperhitungkan dan elemen boleh diulang; r boleh lebih besar dari n.",
+        ),
+        (
+            "Permutasi dengan Unsur Identik",
+            "P = n! / (n1! x n2! x ... x nk!)",
+            "Unsur pada kelompok yang sama identik; n = n1 + n2 + ... + nk.",
+        ),
+        (
+            "Permutasi Melingkar",
+            "P_melingkar(n) = (n - 1)!",
+            "Susunan yang hanya berbeda karena rotasi dianggap sama; n minimal 1.",
+        ),
+        (
+            "Kombinasi Standar",
+            "C(n,r) = n! / (r! (n - r)!)",
+            "Urutan tidak diperhitungkan dan elemen tidak diulang.",
+        ),
+        (
+            "Kombinasi dengan Pengulangan",
+            "C_ulang(n,r) = C(n + r - 1, r)",
+            "Urutan tidak diperhitungkan, elemen boleh diulang, dan n minimal 1.",
+        ),
+    ]
+    for title, formula, description in references:
+        print(f"\n{title}")
+        print(f"  {formula}")
+        print(f"  {description}")
+    print("\nPengertian Faktorial")
+    print("  n! = n x (n - 1) x ... x 2 x 1")
+    print("  0! = 1")
+    print("  Contoh: 4! = 4 x 3 x 2 x 1 = 24")
+
+
+def pilih_metode(
+    title: str, methods: dict[str, tuple[str, MethodAction]]
+) -> MethodAction | None:
+    print(f"\n=== {title.upper()} ===")
+    for key, (name, _) in methods.items():
+        print(f"{key}. {name}")
+    print("0. Kembali")
+    choice = input("Pilih metode: ").strip()
+    if choice == "0":
+        return None
+    selected = methods.get(choice)
+    if selected is None:
+        print("Pilihan metode tidak valid.")
+        return None
+    return selected[1]
+
+
+def program_utama() -> None:
+    while True:
+        print("\n=== PERMUTASI & KOMBINASI ===")
+        print("1. Permutasi")
+        print("2. Kombinasi")
+        print("3. Rumus")
+        print("0. Keluar")
         choice = input("Pilih menu: ").strip()
         if choice == "0":
             print("Sampai jumpa!")
             return
-        if choice == "7":
-            print_formulas()
+        if choice == "3":
+            tampilkan_rumus()
             continue
-        if choice == "8":
-            run_preset()
+        if choice == "1":
+            action = pilih_metode("Metode Permutasi", PERMUTATION_METHODS)
+        elif choice == "2":
+            action = pilih_metode("Metode Kombinasi", COMBINATION_METHODS)
+        else:
+            print("Pilihan tidak valid. Pilih menu 0 sampai 3.")
             continue
-        selected_mode = MODES.get(choice)
-        if selected_mode is None:
-            print("Pilihan tidak valid. Pilih menu 0 sampai 8.")
-            continue
-        try:
-            run_mode(selected_mode[1])
-        except ValueError as error:
-            print(f"Input tidak valid: {error}")
+        if action is not None:
+            try:
+                action()
+            except ValueError as error:
+                print(f"Input tidak valid: {error}")
 
 
 if __name__ == "__main__":
-    main()
+    program_utama()
